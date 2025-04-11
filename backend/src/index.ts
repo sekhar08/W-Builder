@@ -5,7 +5,8 @@ import { TextBlock } from '@anthropic-ai/sdk/resources';
 import fs from 'fs'
 import { basePrompt, basePrompt as reactBasePrompt } from './defaults/react';
 import { basePrompt as nodeBasePrompt } from './defaults/node';
-import { BASE_PROMPT } from './prompts';
+import { BASE_PROMPT, getSystemPrompt } from './prompts';
+import { get } from 'http';
 
 const client = new Anthropic();
 const app = express();
@@ -45,6 +46,21 @@ app.post("/template", async (req, res) => {
     return;
 
 })
+
+
+app.post("/chat", async (req, res) => {
+    const messages = req.body.messages;
+     
+    const response = await client.messages.create({
+        messages: messages,
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 8000,
+        system: getSystemPrompt(messages),
+    })
+     console.log(response)
+     res.json({})
+})
+
 
 
 app.listen(3000)
