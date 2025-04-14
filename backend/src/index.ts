@@ -1,22 +1,21 @@
 require("dotenv").config();
-import express from 'express';
-import { Anthropic } from '@anthropic-ai/sdk';
-import { TextBlock } from '@anthropic-ai/sdk/resources';
-import fs from 'fs'
-import { basePrompt, basePrompt as reactBasePrompt } from './defaults/react';
-import { basePrompt as nodeBasePrompt } from './defaults/node';
-import { BASE_PROMPT, getSystemPrompt } from './prompts';
-import { get } from 'http';
+import express from "express";
+import Anthropic from "@anthropic-ai/sdk";
+import { BASE_PROMPT, getSystemPrompt } from "./prompts";
+import { ContentBlock, TextBlock } from "@anthropic-ai/sdk/resources";
+import {basePrompt as nodeBasePrompt} from "./defaults/node";
+import {basePrompt as reactBasePrompt} from "./defaults/react";
+import cors from "cors";
 
-const client = new Anthropic();
+const anthropic = new Anthropic();
 const app = express();
-
-app.use(express.json());
+app.use(cors())
+app.use(express.json())
 
 app.post("/template", async (req, res) => {
     const prompt = req.body.prompt;
     
-    const response = await client.messages.create({
+    const response = await anthropic.messages.create({
         messages: [{
             role: 'user', content: prompt
         }],
@@ -47,20 +46,21 @@ app.post("/template", async (req, res) => {
 
 })
 
-
 app.post("/chat", async (req, res) => {
     const messages = req.body.messages;
-     
-    const response = await client.messages.create({
+    const response = await anthropic.messages.create({
         messages: messages,
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 8000,
-        system: getSystemPrompt(messages),
+        system: getSystemPrompt()
     })
-     console.log(response)
-     res.json({})
+
+    console.log(response);
+
+    res.json({
+        response: (response.content[0] as TextBlock)?.text
+    });
 })
 
+app.listen(3000);
 
-
-app.listen(3000)
